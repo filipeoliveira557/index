@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberMemory - Jogo da Memória Neon</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts (Outfit) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Estilos Customizados & Efeitos 3D -->
+  <link rel="stylesheet" href="style.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            neonCyan: '#06b6d4',
+            neonPurple: '#a855f7',
+            cyberDark: '#060911',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="cyber-bg cyber-grid-lines text-slate-100 min-h-screen flex flex-col font-sans select-none overflow-x-hidden">
+
+  <!-- Canvas de Confetes da Vitória -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- Container Principal Centralizado -->
+  <div class="relative z-10 flex-1 flex flex-col justify-between max-w-4xl mx-auto w-full px-3.5 sm:px-6 py-4 sm:py-7">
+
+    <!-- CABEÇALHO -->
+    <header class="text-center space-y-3 mb-3 sm:mb-5">
+      <div class="flex items-center justify-between gap-2">
+        <!-- Logo / Marca -->
+        <div class="flex items-center space-x-2.5 text-left">
+          <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-cyan-500 via-sky-400 to-purple-600 flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.45)] flex-shrink-0">
+            <span class="text-2xl sm:text-2xl">🧠</span>
+          </div>
+          <div>
+            <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-300 via-sky-200 to-purple-300 bg-clip-text text-transparent">
+              CyberMemory
+            </h1>
+            <p class="text-[11px] sm:text-xs text-slate-400 font-medium hidden sm:block">Desafie sua mente no universo Neon</p>
+          </div>
+        </div>
+
+        <!-- Controles: Som & Novo Jogo -->
+        <div class="flex items-center space-x-2">
+          <!-- Botão de Efeitos Sonoros -->
+          <button id="soundToggleBtn" aria-label="Ligar ou desligar som" title="Ligar/Desligar Som" class="p-2 sm:p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-cyan-500/50 hover:bg-slate-800/80 transition-all flex items-center justify-center shadow-md active:scale-95">
+            <span id="soundIcon">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+              </svg>
+            </span>
+          </button>
+
+          <!-- Botão Novo Jogo -->
+          <button id="restartBtn" class="flex items-center space-x-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-semibold text-xs sm:text-sm shadow-[0_0_18px_rgba(6,182,212,0.35)] transition-all transform active:scale-95">
+            <svg id="restartSvg" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 transition-transform duration-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+            <span>Novo Jogo</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Seletor de Dificuldades (Fácil 4x3, Médio 4x4, Difícil 6x6) -->
+      <div class="flex items-center justify-center pt-1">
+        <div class="inline-flex p-1 bg-slate-900/90 rounded-2xl border border-slate-800 shadow-inner space-x-1">
+          <button data-difficulty="facil" class="diff-btn px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all text-slate-400 border border-transparent hover:bg-slate-800">
+            Fácil (4x3)
+          </button>
+          <button data-difficulty="medio" class="diff-btn px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-[0_0_12px_rgba(6,182,212,0.3)]">
+            Médio (4x4)
+          </button>
+          <button data-difficulty="dificil" class="diff-btn px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all text-slate-400 border border-transparent hover:bg-slate-800">
+            Difícil (6x6)
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- PAINEL DE ESTATÍSTICAS / CONTROLES (UI/UX) -->
+    <section class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-3.5 sm:mb-5 max-w-2xl mx-auto w-full">
+      
+      <!-- Contador de Jogadas -->
+      <div class="bg-slate-900/75 border border-slate-800 rounded-2xl p-2.5 sm:p-3 flex flex-col items-center justify-center shadow-lg relative overflow-hidden group hover:border-cyan-500/40 transition-all">
+        <div class="flex items-center space-x-1.5 text-slate-400 mb-0.5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+          </svg>
+          <span class="text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Jogadas</span>
+        </div>
+        <span id="movesCounter" class="text-xl sm:text-2xl font-black text-cyan-300 font-mono">0</span>
+      </div>
+
+      <!-- Cronômetro -->
+      <div class="bg-slate-900/75 border border-slate-800 rounded-2xl p-2.5 sm:p-3 flex flex-col items-center justify-center shadow-lg relative overflow-hidden group hover:border-purple-500/40 transition-all">
+        <div class="flex items-center space-x-1.5 text-slate-400 mb-0.5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span class="text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Tempo</span>
+        </div>
+        <span id="timerCounter" class="text-xl sm:text-2xl font-black text-purple-300 font-mono">00:00</span>
+      </div>
+
+      <!-- Pares Encontrados -->
+      <div class="bg-slate-900/75 border border-slate-800 rounded-2xl p-2.5 sm:p-3 flex flex-col items-center justify-center shadow-lg relative overflow-hidden group hover:border-emerald-500/40 transition-all">
+        <div class="flex items-center space-x-1.5 text-slate-400 mb-0.5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <span class="text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Pares</span>
+        </div>
+        <span id="pairsCounter" class="text-xl sm:text-2xl font-black text-emerald-400 font-mono">0 / 8</span>
+      </div>
+
+      <!-- Melhor Pontuação / Recorde -->
+      <div class="bg-slate-900/75 border border-slate-800 rounded-2xl p-2.5 sm:p-3 flex flex-col items-center justify-center shadow-lg relative overflow-hidden group hover:border-amber-500/40 transition-all">
+        <div class="flex items-center space-x-1.5 text-slate-400 mb-0.5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+            <path d="M4 22h16"></path>
+            <path d="M10 14.66V17c0 .55-.45 1-1 1H7"></path>
+            <path d="M14 14.66V17c0 .55.45 1 1 1h2"></path>
+            <path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path>
+          </svg>
+          <span class="text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Recorde</span>
+        </div>
+        <span id="bestCounter" class="text-base sm:text-lg font-black text-amber-300 font-mono">--</span>
+      </div>
+    </section>
+
+    <!-- ÁREA DO TABULEIRO / GRID DE CARTAS -->
+    <main class="flex-1 flex items-center justify-center my-auto w-full">
+      <div id="cardsGrid" class="grid gap-2 sm:gap-3 mx-auto w-full">
+        <!-- Cartas geradas dinamicamente via script.js -->
+      </div>
+    </main>
+
+    <!-- RODAPÉ -->
+    <footer class="mt-4 sm:mt-6 text-center text-[11px] sm:text-xs text-slate-500 flex items-center justify-center space-x-2">
+      <span>Jogo da Memória</span>
+      <span>&bull;</span>
+      <span>Cyber Neon</span>
+      <span>&bull;</span>
+      <span>Tailwind CSS & Web Audio</span>
+    </footer>
+  </div>
+
+  <!-- MODAL / TELA DE VITÓRIA ELEGANTE -->
+  <div id="victoryModal" class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-opacity duration-300">
+    <div class="relative w-full max-w-md bg-gradient-to-b from-slate-900 to-slate-950 border border-cyan-500/40 rounded-3xl p-6 sm:p-8 shadow-[0_0_50px_rgba(6,182,212,0.35)] text-center transform transition-all scale-100">
+      
+      <!-- Ícone de Troféu com Brilho Neon -->
+      <div class="relative w-20 h-20 mx-auto mb-3 flex items-center justify-center">
+        <div class="absolute inset-0 rounded-full bg-cyan-500/25 blur-xl"></div>
+        <div class="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500 to-purple-600 flex items-center justify-center text-3xl shadow-[0_0_20px_rgba(6,182,212,0.5)]">
+          🏆
+        </div>
+      </div>
+
+      <!-- Badge de Novo Recorde (Mostrado se quebrar recorde) -->
+      <div id="newRecordBadge" class="hidden mb-2 inline-flex items-center px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/60 text-amber-300 text-xs font-bold tracking-wide shadow-[0_0_12px_rgba(245,158,11,0.4)]">
+        ✨ NOVO RECORDE PESSOAL! ✨
+      </div>
+
+      <h2 class="text-2xl sm:text-3xl font-black text-white mb-1">
+        Vitória Extraordinária!
+      </h2>
+      <p class="text-xs sm:text-sm text-slate-400 mb-4">
+        Você encontrou todos os pares com maestria!
+      </p>
+
+      <!-- Avaliação em Estrelas -->
+      <div id="modalStars" class="flex justify-center space-x-2 mb-5">
+        <!-- Preenchido via script.js -->
+      </div>
+
+      <!-- Estatísticas da Partida -->
+      <div class="grid grid-cols-3 gap-2 bg-slate-800/70 border border-slate-700/60 rounded-2xl p-3.5 mb-6 text-center">
+        <div>
+          <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-0.5">Tempo</span>
+          <span id="modalTime" class="text-base sm:text-lg font-black text-purple-300 font-mono">00:00</span>
+        </div>
+        <div>
+          <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-0.5">Jogadas</span>
+          <span id="modalMoves" class="text-base sm:text-lg font-black text-cyan-300 font-mono">0</span>
+        </div>
+        <div>
+          <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-0.5">Nível</span>
+          <span id="modalDiffName" class="text-base sm:text-lg font-black text-emerald-400">Médio</span>
+        </div>
+      </div>
+
+      <!-- Botão de Jogar Novamente -->
+      <button id="playAgainBtn" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-bold text-sm sm:text-base shadow-[0_0_25px_rgba(6,182,212,0.45)] transition-all transform active:scale-95">
+        Jogar Novamente
+      </button>
+    </div>
+  </div>
+
+  <!-- Script Principal -->
+  <script src="script.js"></script>
+</body>
+</html>
